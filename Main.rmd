@@ -15,4 +15,21 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r cars}
 #Reading cancer
 cancer <- read.csv("cancer_data.csv", header = TRUE)
-attach(cancer)
+cancer 
+```  
+
+
+
+```{r}
+colnames(cancer)
+```
+
+
+```{r}
+
+library(ggplot2)
+
+fit <- lm(cancer$id~cancer$diagnosis)
+ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
+
+```
