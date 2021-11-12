@@ -1,1 +1,18 @@
-mbti <- read_csv(/Users/amy/Desktop/mbti.csv)
+---
+title: "Stat3616 FP"
+author: "Eun Chong Chu"
+date: "12/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+```{r cars}
+#Reading cancer
+cancer <- read.csv("cancer_data.csv", header = TRUE)
+attach(cancer)
