@@ -12,24 +12,105 @@ knitr::opts_chunk$set(echo = TRUE)
 ## R Markdown
 
 
-```{r cars}
-#Reading cancer
-cancer <- read.csv("cancer_data.csv", header = TRUE)
-cancer 
-```  
-
-
+## Exploring Cancer Dataset
 
 ```{r}
+#Reading cancer.csv
+
+cancer <- read.csv("/Users/amy/Desktop/cancer_data.csv", header = TRUE)
+attach(cancer)
+library(ggplot2)
 colnames(cancer)
 ```
 
+#Counting dataset by counting cancer_id per diagnosis type
+```{r}
+fit <- lm(cancer$id~cancer$diagnosis)
+summary(fit)
+ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
+```
+#Below is the exploration of dataset variables one by one
+```{r}
+radius_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=radius_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(radius_mean)
+#ggplot(as.data.frame(cancer), aes(x=factor(diagnosis), y=area_mean, shape=area_worst, color=area_se)) + geom_point()
+fit_radius <- lm(cancer$id ~ cancer$diagnosis + cancer$radius_mean)
+summary(fit_radius)
+plot(fit_radius)
+```
 
 ```{r}
-
-library(ggplot2)
-
-fit <- lm(cancer$id~cancer$diagnosis)
-ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
-
+texture_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=texture_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(texture_mean)
+fit_texture <- lm(cancer$id ~ cancer$diagnosis + cancer$texture_mean)
+summary(fit_texture)
+plot(fit_texture)
 ```
+
+```{r}
+perimeter_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=perimeter_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(perimeter_mean)
+fit_perimeter <- lm(cancer$id ~ cancer$diagnosis + cancer$perimeter_mean)
+summary(fit_perimeter)
+plot(fit_perimeter)
+```
+
+```{r}
+area_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=area_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(area_mean)
+fit_area <- lm(cancer$id ~ cancer$diagnosis + cancer$area_mean)
+summary(fit_area)
+plot(fit_area)
+```
+
+```{r}
+smoothness_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=smoothness_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(smoothness_mean)
+fit_smoothness <- lm(cancer$id ~ cancer$diagnosis + cancer$smoothness_mean)
+summary(fit_smoothness)
+plot(fit_smoothness)
+```
+
+
+```{r}
+compactness_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=compactness_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(compactness_mean)
+fit_compactness <- lm(cancer$id ~ cancer$diagnosis + cancer$compactness_mean)
+summary(fit_compactness)
+plot(fit_compactness)
+```
+
+
+```{r}
+concavity_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=concavity_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(concavity_mean)
+fit_concavity <- lm(cancer$id ~ cancer$diagnosis + cancer$concavity_mean)
+summary(fit_concavity)
+plot(fit_concavity)
+```
+
+```{r}
+concave.points_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=concave.points_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(concave.points_mean)
+fit_concave.points <- lm(cancer$id ~ cancer$diagnosis + cancer$concave.points_mean)
+summary(fit_concave.points)
+plot(fit_concave.points)
+```
+
+```{r}
+symmetry_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=symmetry_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(symmetry_mean)
+fit_symmetry <- lm(cancer$id ~ cancer$diagnosis + cancer$symmetry_mean)
+summary(fit_symmetry)
+plot(fit_symmetry)
+```
+
+
+```{r}
+fractal_dimension_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=fractal_dimension_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(fractal_dimension_mean)
+fit_fractal <- lm(cancer$id ~ cancer$diagnosis + cancer$fractal_dimension_mean)
+summary(fit_fractal)
+plot(fit_fractal)
+```
+
