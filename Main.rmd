@@ -104,7 +104,7 @@ fit_symmetry <- lm(cancer$id ~ cancer$diagnosis + cancer$symmetry_mean)
 summary(fit_symmetry)
 plot(fit_symmetry)
 ```
-
+######## Wendy ##########
 
 ```{r}
 fractal_dimension_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=fractal_dimension_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
@@ -114,3 +114,57 @@ summary(fit_fractal)
 plot(fit_fractal)
 ```
 
+mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+head(mydata)
+res<-cor(mydata)
+round(res,2)
+
+#heatmap
+col<- colorRampPalette(c("blue", "white", "red"))(20)
+heatmap(x = res, col = col, symm = TRUE)
+
+#Create the correlation heatmap with ggplot2
+install.packages("reshape2")
+library(reshape2)
+melted_res<-melt(res)
+head(melted_res)
+ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+get_upper_tri <- function(res){
+  res[lower.tri(res)]<- NA
+  return(res)}
+upper_tri <- get_upper_tri(res)
+upper_tri
+library(reshape2)
+melted_res <- melt(upper_tri, na.rm = TRUE)
+# Heatmap
+library(ggplot2)
+ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 12, hjust = 1))+
+  coord_fixed()
+
+melted_res + 
+  geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    panel.background = element_blank(),
+    axis.ticks = element_blank(),
+    legend.justification = c(1, 0),
+    legend.position = c(0.6, 0.7),
+    legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                               title.position = "top", title.hjust = 0.5))
+
+
+#scatter plots
+install.packages("PerformanceAnalytics")
+library("PerformanceAnalytics")
+chart.Correlation(my_data, histogram=TRUE, pch=19)
