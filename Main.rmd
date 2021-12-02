@@ -165,14 +165,14 @@ heatmap<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+
                        name="Pearson\nCorrelation") +
   theme_minimal()+ 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
+                                   size = 11, hjust = 1))+
   coord_fixed()
 
 # install.packages("ggmap")
 library(ggmap)
 # melted_res <- ggmap(melted_res)
 heatmap + 
-geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "red", size = 2) +
+geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "white", size = 2) +
 theme(
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
@@ -187,10 +187,7 @@ theme(
                 title.position = "top", title.hjust = 0.5))
 
 
-#scatter plots
-install.packages("PerformanceAnalytics")
-library("PerformanceAnalytics")
-chart.Correlation(my_data, histogram=TRUE, pch=19)
+
 ```
 
 
