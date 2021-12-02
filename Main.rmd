@@ -11,8 +11,29 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
-#library 
+#install packages 
+install.packages("ggplot2")
+install.packages("reshap2")
+install.packages("PerformanceAnalytics")
+install.packages("remotes")
+install_github("vqv/ggbiplot")
+install.packages("stringr")
 
+
+```
+
+```{r}
+#library 
+library(ggplot2)
+library(reshape2)
+library("PerformanceAnalytics") 
+library("remotes")
+library("ggbiplot")
+library(stringr) 
+library(ranger)
+library(naivebayes)
+library(kernlab)
+library(rpart)
 
 ```
 
@@ -23,8 +44,17 @@ knitr::opts_chunk$set(echo = TRUE)
 
 cancer <- read.csv("cancer_data.csv", header = TRUE)
 attach(cancer)
-library(ggplot2)
 colnames(cancer)
+original_data<- read.csv("cancer_data.csv", header = TRUE)
+
+
+dim(cancer)
+cancer<-as.data.frame(cancer)
+cancerfactor<-cancer[,3:12]
+## there is no logic why we exclude 13~32.need explanation for that  
+
+
+cancer
 ```
 
 #Counting dataset by counting cancer_id per diagnosis type
@@ -33,9 +63,10 @@ fit <- lm(cancer$id~cancer$diagnosis)
 summary(fit)
 ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
 ```
+
 #Below is the exploration of dataset variables one by one
 ```{r}
-radius_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=radius_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+radius_mean <- ggplot(cancer,aes(x=factor(diagnosis),y=radius_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
 plot(radius_mean)
 #ggplot(as.data.frame(cancer), aes(x=factor(diagnosis), y=area_mean, shape=area_worst, color=area_se)) + geom_point()
 fit_radius <- lm(cancer$id ~ cancer$diagnosis + cancer$radius_mean)
@@ -131,6 +162,7 @@ plot(fit_fractal)
 ```
 
 
+
 ######## Wendy ########## 
 
 ```{r}
@@ -145,7 +177,7 @@ heatmap(x = res, col = col, symm = TRUE)
 
 #Create the correlation heatmap with ggplot2
 #install.packages("reshape2")
-library(reshape2)
+
 melted_res<-melt(res)
 head(melted_res)
 ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
@@ -154,10 +186,8 @@ get_upper_tri <- function(res){
   return(res)}
 upper_tri <- get_upper_tri(res)
 upper_tri
-library(reshape2)
 melted_res <- melt(upper_tri, na.rm = TRUE)
 # Heatmap
-library(ggplot2)
 ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
   geom_tile(color = "white")+
   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
@@ -185,8 +215,6 @@ melted_res +
 
 
 #scatter plots
-install.packages("PerformanceAnalytics")
-library("PerformanceAnalytics")
 chart.Correlation(my_data, histogram=TRUE, pch=19)
 ```
 
@@ -195,37 +223,22 @@ chart.Correlation(my_data, histogram=TRUE, pch=19)
 
 ```{r}
 
-mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+mydata<-cancer[, 3:12]
 head(mydata)
 res<-cor(mydata)
 round(res,2)
 ```
 
-```{r}
-library("remotes")
-install_github("vqv/ggbiplot")
-
-
-```
-
-```{r}
-
-
-library("ggbiplot")
-
-
-```
 
 
 ```{r}
 
 
 cancer <- read.csv("C:/Users/lg/Documents/GitHub/stat3612_mbti/cancer_data.csv", header = TRUE)
-mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+mydata<-cancer[, 3:12]
 cancer.pca<-prcomp(mydata,scale = TRUE)
 
 cancer.pca 
-library("ggbiplot")
 ggbiplot(cancer.pca) 
 
 
@@ -355,3 +368,111 @@ sum(apply(t, 1, min))
 
 
 
+### splitting data 
+
+```{r}
+library(caret) 
+
+set.seed(12L) 
+original_data$diagnosis=ifelse(original_data$diagnosis==0,"No","Yes")
+trainingIndex <-createDataPartition(original_data$diagnosis, p= 0.7, list=FALSE)
+trainingData<-original_data[trainingIndex,]
+testData<-original_data[-trainingIndex,]
+
+dim(testData)
+trainingData
+
+```
+
+```{r}
+
+
+set.seed(12L)
+
+myFolds <- createFolds(trainingData$diagnosis, k = 5)
+str(myFolds)
+
+mycontrol<-trainControl(
+                        method="cv", 
+                        number = 10,
+                        classProbs=TRUE, 
+                        savePredictions = TRUE,
+                        summaryFunction=twoClassSummary, 
+                        #index=myFolds,
+                        verboseIter = FALSE)
+
+
+
+trainingData
+fit.knn<-train(diagnosis~.,
+               data=trainingData,
+               method="knn",
+               metric="ROC",
+               tuneLength=10,
+               trControl = mycontrol) 
+
+
+
+prediction_pknn<- predict(fit.knn, testData, type = "prob")
+colAUC(prediction_pknn,testData$diagnosis, plotROC = TRUE)
+
+
+
+```
+
+
+```{r}
+
+
+
+fit.randomforest<-train(diagnosis~.,
+                        data=trainingData,method = "ranger", 
+                        metric="ROC", 
+                        tuneLength=10,
+                        tuneGrid = expand.grid(
+                        mtry = c(3,4,5,6),
+                        splitrule = c("gini", "extratrees"),
+                        min.node.size = 1),
+                        trControl = mycontrol) 
+
+
+prediction_prf<- predict(fit.randomforest, testData, type = "prob")
+colAUC(prediction_prf, testData$diagnosis, plotROC = TRUE)
+
+
+
+
+fit.nb<- train(V35~.,
+               data=trainingData,
+               method="naive_bayes",
+               metric="ROC",
+               tuneLength=10,
+               trControl=mycontrol)
+
+
+fit.svm<-train(V35~.,
+               data=trainingData,
+               method="svmRadial",
+               metric="ROC", 
+               tuneLength=10, 
+               trControl=mycontrol)
+
+```
+
+
+
+```{r}
+
+
+model_list <- list( 
+                   knn = fit.knn,
+                   rf = fit.randomforest
+                   )
+
+resamp <- resamples(model_list)
+
+resamp
+summary(resamp)
+lattice::bwplot(resamp, metric = "ROC")
+
+```
