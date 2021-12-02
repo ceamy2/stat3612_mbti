@@ -139,7 +139,7 @@ head(mydata)
 res<-cor(mydata)
 round(res,2)
 
-#heatmap
+#heatmap 
 col<- colorRampPalette(c("white", "grey", "black"))(20)
 heatmap(x = res, col = col, symm = TRUE)
 
@@ -158,7 +158,7 @@ library(reshape2)
 melted_res <- melt(uptri, na.rm = TRUE)
 # Heatmap
 library(ggplot2)
-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
+heatmap<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
   geom_tile(color = "white")+
   scale_fill_gradient2(low = "white", high = "black", mid = "grey", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
@@ -171,8 +171,8 @@ ggplot(data = melted_res, aes(Var2, Var1, fill = value))+
 # install.packages("ggmap")
 library(ggmap)
 # melted_res <- ggmap(melted_res)
-melted_res + 
-geom_text(aes(Var2, Var1, label = value), color = "red", size = 4) +
+heatmap + 
+geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "red", size = 2) +
 theme(
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
