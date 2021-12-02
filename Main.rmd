@@ -131,7 +131,7 @@ plot(fit_fractal)
 ```
 
 
-######## Wendy ########## 
+######## Heatmap ########## 
 
 ```{r}
 mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
@@ -140,7 +140,7 @@ res<-cor(mydata)
 round(res,2)
 
 #heatmap
-col<- colorRampPalette(c("blue", "white", "red"))(20)
+col<- colorRampPalette(c("white", "grey", "black"))(20)
 heatmap(x = res, col = col, symm = TRUE)
 
 #Create the correlation heatmap with ggplot2
@@ -149,18 +149,18 @@ library(reshape2)
 melted_res<-melt(res)
 head(melted_res)
 ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
-get_upper_tri <- function(res){
+uppertriangle <- function(res){
   res[lower.tri(res)]<- NA
   return(res)}
-upper_tri <- get_upper_tri(res)
-upper_tri
+uptri <- uppertriangle(res)
+uptri
 library(reshape2)
-melted_res <- melt(upper_tri, na.rm = TRUE)
+melted_res <- melt(uptri, na.rm = TRUE)
 # Heatmap
 library(ggplot2)
 ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
   geom_tile(color = "white")+
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+  scale_fill_gradient2(low = "white", high = "black", mid = "grey", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ 
@@ -168,20 +168,23 @@ ggplot(data = melted_res, aes(Var2, Var1, fill = value))+
                                    size = 12, hjust = 1))+
   coord_fixed()
 
+# install.packages("ggmap")
+library(ggmap)
+# melted_res <- ggmap(melted_res)
 melted_res + 
-  geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
-  theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.ticks = element_blank(),
-    legend.justification = c(1, 0),
-    legend.position = c(0.6, 0.7),
-    legend.direction = "horizontal")+
+geom_text(aes(Var2, Var1, label = value), color = "red", size = 4) +
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
-  title.position = "top", title.hjust = 0.5))
+                title.position = "top", title.hjust = 0.5))
 
 
 #scatter plots
