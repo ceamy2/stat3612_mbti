@@ -140,7 +140,7 @@ res<-cor(mydata)
 round(res,2)
 
 #heatmap 
-col<- colorRampPalette(c("white", "grey", "black"))(20)
+col<- colorRampPalette(c("navy", "white", "indianred"))(20)
 heatmap(x = res, col = col, symm = TRUE)
 
 #Create the correlation heatmap with ggplot2
@@ -160,7 +160,7 @@ melted_res <- melt(uptri, na.rm = TRUE)
 library(ggplot2)
 heatmap<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
   geom_tile(color = "white")+
-  scale_fill_gradient2(low = "white", high = "black", mid = "grey", 
+  scale_fill_gradient2(low = "navy", high = "indianred", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ 
@@ -172,7 +172,7 @@ heatmap<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+
 library(ggmap)
 # melted_res <- ggmap(melted_res)
 heatmap + 
-geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "white", size = 2) +
+geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "black", size = 2) +
 theme(
   axis.title.x = element_blank(),
   axis.title.y = element_blank(),
