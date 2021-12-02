@@ -9,12 +9,19 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+
+```{r}
+#library 
+
+
+```
+
 ## Exploring Cancer Dataset
 
 ```{r}
 #Reading cancer.csv
 
-cancer <- read.csv("/Users/amy/Desktop/cancer_data.csv", header = TRUE)
+cancer <- read.csv("cancer_data.csv", header = TRUE)
 attach(cancer)
 library(ggplot2)
 colnames(cancer)
@@ -192,4 +199,42 @@ mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
 head(mydata)
 res<-cor(mydata)
 round(res,2)
+```
+
+```{r}
+library("remotes")
+install_github("vqv/ggbiplot")
+
+
+```
+
+```{r}
+
+
+library("ggbiplot")
+
+
+```
+
+
+```{r}
+
+
+cancer <- read.csv("C:/Users/lg/Documents/GitHub/stat3612_mbti/cancer_data.csv", header = TRUE)
+mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+cancer.pca<-prcomp(mydata,scale = TRUE)
+
+cancer.pca 
+library("ggbiplot")
+ggbiplot(cancer.pca) 
+
+
+```  
+
+
+
+
+```{r}
+
+
 ```
