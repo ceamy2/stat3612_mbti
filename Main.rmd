@@ -11,9 +11,41 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 ```{r}
+#install packages 
+install.packages("ggplot2")
+install.packages("reshap2")
+install.packages("PerformanceAnalytics")
+install.packages("remotes")
+install_github("vqv/ggbiplot")
+install.packages("stringr")
+install.packages("factoextra")
+install.packages("clValid")
+install.packages("ROCR")
+install.packages("pROC")
+
+```
+
+```{r}
 #library 
+library(ggplot2)
+library(reshape2)
+library("PerformanceAnalytics") 
+library("remotes")
+library("ggbiplot")
+library(stringr) 
+library(ranger)
+library(naivebayes)
+library(kernlab)
+library(rpart)
+library(factoextra)
+library(clValid)
+library(MASS)
+library(factoextra)
+library(caret)
+library(ROCR)
+library(pROC) 
 
-
+library(cluster)
 ```
 
 ## Exploring Cancer Dataset
@@ -21,113 +53,23 @@ knitr::opts_chunk$set(echo = TRUE)
 ```{r}
 #Reading cancer.csv
 
-cancer <- read.csv("cancer_data.csv", header = TRUE)
+cancer <- read.csv("cancer_data_original.csv", header = TRUE)
 attach(cancer)
-library(ggplot2)
+
+
+cancer.org<-cancer
+
+cancer$diagnosis=as.numeric(cancer$diagnosis=="M")
+
+
+print(cancer$diagnosis)
+
 colnames(cancer)
-```
+original_data<- read.csv("cancer_data.csv", header = TRUE)
 
-#Counting dataset by counting cancer_id per diagnosis type
-```{r}
-fit <- lm(cancer$id~cancer$diagnosis)
-summary(fit)
-ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
-```
-#Below is the exploration of dataset variables one by one
-```{r}
-radius_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=radius_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(radius_mean)
-#ggplot(as.data.frame(cancer), aes(x=factor(diagnosis), y=area_mean, shape=area_worst, color=area_se)) + geom_point()
-fit_radius <- lm(cancer$id ~ cancer$diagnosis + cancer$radius_mean)
-summary(fit_radius)
-plot(fit_radius)
-```
+cancer<-as.data.frame(cancer)
+cancerfactor<-cancer[,3:32]
 
-```{r}
-texture_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=texture_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(texture_mean)
-fit_texture <- lm(cancer$id ~ cancer$diagnosis + cancer$texture_mean)
-summary(fit_texture)
-plot(fit_texture)
-```
-
-```{r}
-perimeter_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=perimeter_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(perimeter_mean)
-fit_perimeter <- lm(cancer$id ~ cancer$diagnosis + cancer$perimeter_mean)
-summary(fit_perimeter)
-plot(fit_perimeter)
-```
-
-```{r}
-area_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=area_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(area_mean)
-fit_area <- lm(cancer$id ~ cancer$diagnosis + cancer$area_mean)
-summary(fit_area)
-plot(fit_area)
-```
-
-```{r}
-smoothness_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=smoothness_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(smoothness_mean)
-fit_smoothness <- lm(cancer$id ~ cancer$diagnosis + cancer$smoothness_mean)
-summary(fit_smoothness)
-plot(fit_smoothness)
-```
-
-
-```{r}
-compactness_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=compactness_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(compactness_mean)
-fit_compactness <- lm(cancer$id ~ cancer$diagnosis + cancer$compactness_mean)
-summary(fit_compactness)
-plot(fit_compactness)
-```
-
-
-```{r}
-concavity_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=concavity_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(concavity_mean)
-fit_concavity <- lm(cancer$id ~ cancer$diagnosis + cancer$concavity_mean)
-summary(fit_concavity)
-plot(fit_concavity)
-```
-
-```{r}
-concave.points_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=concave.points_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(concave.points_mean)
-fit_concave.points <- lm(cancer$id ~ cancer$diagnosis + cancer$concave.points_mean)
-summary(fit_concave.points)
-plot(fit_concave.points)
-```
-
-```{r}
-symmetry_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=symmetry_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(symmetry_mean)
-fit_symmetry <- lm(cancer$id ~ cancer$diagnosis + cancer$symmetry_mean)
-summary(fit_symmetry)
-plot(fit_symmetry)
-```
-
-
-```{r}
-fractal_dimension_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=fractal_dimension_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(fractal_dimension_mean)
-fit_fractal <- lm(cancer$id ~ cancer$diagnosis + cancer$fractal_dimension_mean)
-summary(fit_fractal)
-plot(fit_fractal)
-```
-
-
-
-
-
-```{r}
-fractal_dimension_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=fractal_dimension_mean)) + geom_point() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
-plot(fractal_dimension_mean)
-fit_fractal <- lm(cancer$id ~ cancer$diagnosis + cancer$fractal_dimension_mean)
-summary(fit_fractal)
-plot(fit_fractal)
 ```
 
 
@@ -145,7 +87,6 @@ heatmap(x = res, col = col, symm = TRUE)
 
 #Create the correlation heatmap with ggplot2
 #install.packages("reshape2")
-library(reshape2)
 melted_res<-melt(res)
 head(melted_res)
 ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
@@ -188,170 +129,491 @@ theme(
 
 
 
-```
-
-
-
-
 ```{r}
 
-mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+mydata<-cancer[, 3:12]
 head(mydata)
 res<-cor(mydata)
 round(res,2)
 ```
 
+#VIF 
 ```{r}
-library("remotes")
-install_github("vqv/ggbiplot")
+#install.packages("magrittr") 
+library(magrittr) 
+#install.packages("caret")
+library(caret)
+#install.packages("car")
+library(car)
 
+# Split the data into training and test set
+cancerVIF<-cancer[,2:13]
+set.seed(123)
+training.samples <- createDataPartition(y=cancerVIF$diagnosis,p=0.8,list = FALSE)
+train.data  <- cancerVIF[training.samples, ]
+test.data <- cancerVIF[-training.samples, ]
 
-```
-
-```{r}
-
-
-library("ggbiplot")
-
-
-```
-
-
-```{r}
-
-
-cancer <- read.csv("C:/Users/lg/Documents/GitHub/stat3612_mbti/cancer_data.csv", header = TRUE)
-mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
-cancer.pca<-prcomp(mydata,scale = TRUE)
-
-cancer.pca 
-library("ggbiplot")
-ggbiplot(cancer.pca) 
-
-
-```  
-
-
-
-
-```{r}
-library(ggplot2)
-library(stringr)
-
-url <- "http://s3.amazonaws.com/assets.datacamp.com/production/course_1903/datasets/WisconsinCancer.csv"
-# Download the data: wisc.df
-wisc.df <- read.csv(url)
-str(wisc.df)
-# Convert the features of the data: wisc.data
-wisc.data <- as.matrix(wisc.df[, 3:32])
-str(wisc.data) 
-row.names(wisc.data) <- wisc.df$id
-head(wisc.data)
-diagnosis = as.numeric(wisc.df$diagnosis == "M")
-colnames(wisc.data)
-
-
-## Performing PCA
-# Check column means and standard deviations
-round(colMeans(wisc.data), 2)
-round(apply(wisc.data, 2, sd), 2)
-# Execute PCA, scaling if appropriate: wisc.pr
-wisc.pr <- prcomp(wisc.data, scale = T, center = T)
-
-# Look at summary of results
-summary(wisc.pr) 
-
-#install.packages("remotes")
-#remotes::install_github("ssinari/smisc")
-## Interpreting PCA results
-# Create a biplot of wisc.pr
-biplot(wisc.pr)
-
-# Scatter plot observations by components 1 and 2
-plot(wisc.pr$x[, c(1, 2)], col = (diagnosis + 1), xlab = "PC1", ylab = "PC2")
-
-# Repeat for components 1 and 3
-plot(wisc.pr$x[, c(1, 3)], col = (diagnosis + 1), xlab = "PC1", ylab = "PC3") 
-
-
+# Build the model
+model1 <- lm(diagnosis ~., data = train.data)
+# Make predictions
+predictions <- model1 %>% predict(test.data)
+# Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$diagnosis),
+  R2 = R2(predictions, test.data$diagnosis)
+)
+car::vif(model1)
 ```
 
 
 
 
-```{r}
-# We can see from the charts that pc1 and pc2 overlap less than pc1 and pc3.
-# This is expected as pc1 and pc2 are meant to be orthogonal and explain different variance
 
-## Variance explained
-# Set up 1 x 2 plotting grid
-par(mfrow = c(1, 2))
+### peformming PCA 
+
+```{r}
+
+##use entire variables 
+cancerfactor<-cancer[,3:32]
+
+
+##calculating mean and variance of possible cancer factors 
+round(colMeans(cancerfactor),4)
+round(apply(cancerfactor,2,sd),4) 
+#By this we recognize the neccessity of scaling the data when working on pca 
+
+##creating pca 
+cancer.pca <- prcomp(cancerfactor, scale = T, center=TRUE)
+
+```
+
+
+#plotting pca plot 
+```{r}
+# this needs cancer$diagnosis :M/B
+# this one shows the separation of the data
+fviz_pca_ind(cancer.pca, geom.ind = "point", pointshape=21, pointsize=2, fill.ind=cancer.org$diagnosis, addEllipses = TRUE, label= "var", col.ind = "black", col.var="black", paleete="jco", legend.title ="Diagnosis" ) + ggtitle("two dimensional PCA plot based on 30 features")+ theme(plot.title = element_text(hjust=0.5))
+
+
+#this one shows the vector 
+ggbiplot(cancer.pca)
+summary(cancer.pca) 
+
+```
+
+reference : 
+https://towardsdatascience.com/principal-component-analysis-pca-101-using-r-361f4c53a9ff 
+
+
+
+# identify how much variance are explained through pca components 
+
+```{r}
 
 # Calculate variability of each component
-pr.var <- wisc.pr$sdev^2
 
-# Variance explained by each principal component: pve
-pve <- pr.var / sum(pr.var)
+cancerfactor.var<-cancer.pca$sdev^2 
+cancer.pve <- cancerfactor.var / sum(cancerfactor.var)
 
+
+## can choose either one but 2nd one proves the knowledge of pca that 1st pca component has the highest eignevalue  
 # Plot variance explained for each principal component
-plot(pve, xlab = "Principal Component", 
+#1
+plot(cancer.pve, xlab = "Principal Component", 
      ylab = "Proportion of Variance Explained", 
      ylim = c(0, 1), type = "b")
 
+#2
+fviz_eig(cancer.pca)
+#pca component 1 explains the most variance.
+
+
+
 # Plot cumulative proportion of variance explained
-plot(cumsum(pve), xlab = "Principal Component", 
+plot(cumsum(cancer.pve), xlab = "Principal Component", 
      ylab = "Cumulative Proportion of Variance Explained", 
      ylim = c(0, 1), type = "b")
 
-``` 
+#to explain 90% of the varaiance need 7pca component
+ 
 
+```
+
+
+## model selection: LDA. KNN. RF. Decision tree. NB... 
+
+#use same tuning controls and compare the best model with highest AUC value 
+
+
+
+### splitting data 
+
+```{r}
+
+set.seed(12L)
+
+
+cancer.org.mod=cancer.org[,2:32]
+trainingIndex <-createDataPartition(cancer.org$diagnosis, p= 0.75, list=FALSE)
+trainingData<-cancer.org.mod[trainingIndex,]
+testData<-cancer.org.mod[-trainingIndex,]
+
+
+```
+
+
+### LDA Analysis
+
+```{r}
+
+#cancer.data
+cancerfactor
+lda_df <- lda(diagnosis ~., data = trainingData, scale = TRUE)
+
+
+pca_ldf<- lda(diagnosis~.,data=trainingData)
+
+
+prop.lda<-lda_df$sdev^2/sum(lda_df$svd^2)
+
+library(scales)
+plda<-predict(lda_df,newdata=testData)
+
+
+## evaluation 
+
+cancer.predict.post<-as.data.frame(plda$posterior)
+
+pred<-prediction(cancer.predict.post[,2],testData$diagnosis)
+
+roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
+
+auc.train<-performance(pred,measure="auc") 
+auc.train<-auc.train@y.values
+
+
+### area under roc curve
+plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
+print(auc.train[[1]],3)
+
+
+```
+
+#LDA analysis using PCA 
+```{r}
+#### data preparation 
+cancer.pcst<-cancer.pca$x[,1:6]
+cancer.pcst<- cbind(cancer.pcst,cancer$diagnosis)
+colnames(cancer.pcst)[7]<-"diagnosis"
+
+
+##spliting data
+set.seed(12L)
+trainingIndex <-createDataPartition(diagnosis, p= 0.75, list=FALSE)
+trainingDatalda<-cancer.pcst[trainingIndex,]
+testDatalda<-cancer.pcst[-trainingIndex,]
+trainingDatalda<-as.data.frame(trainingDatalda)
+testDatalda<-as.data.frame(testDatalda)
+
+
+cancer.lda <- lda(diagnosis~.,data=trainingDatalda)
+cancer.lda.predict<-predict(cancer.lda,newdata=testDatalda) 
+
+############ evaulation
+cancer.predict.post<-as.data.frame(cancer.lda.predict$posterior)
+
+pred<-prediction(cancer.predict.post[,2],testDatalda$diagnosis)
+
+roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
+
+auc.train<-performance(pred,measure="auc") 
+auc.train<-auc.train@y.values
+
+
+##ROC curve 
+plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
+ 
+```
+reference : 
+https://towardsdatascience.com/linear-discriminant-analysis-lda-101-using-r-6a97217a55a6 
+
+If there is too much things to write can only use lda analysis using PCA 
+
+first one is just normal lda and second one is lda using pca components 
+lda with pca components have slightely higher AUC than normal lda  
+
+
+
+
+
+### splitting data 
+
+```{r}
+
+set.seed(12L)
+
+
+cancer.org.mod=cancer.org[,2:32]
+trainingIndex <-createDataPartition(cancer.org$diagnosis, p= 0.75, list=FALSE)
+trainingData<-cancer.org.mod[trainingIndex,]
+testData<-cancer.org.mod[-trainingIndex,]
+
+
+```
+
+
+### machine learning tech (idk if it is supervised or unsupervised)
+
+#0. setting the tuning parameter 
+
+```{r}
+
+
+set.seed(12L)
+
+myFolds <- createFolds(trainingData$diagnosis, k = 5)
+str(myFolds)
+
+mycontrol<-trainControl(
+                        method="cv", 
+                        number = 10,
+                        classProbs=TRUE, 
+                        savePredictions = TRUE,                           summaryFunction=twoClassSummary, 
+                        index=myFolds,
+                        verboseIter = FALSE)
+
+```
+
+#1 knn method 
+```{r}
+
+
+set.seed(12L)
+fit.knn<-train(diagnosis~.,
+               data=trainingData,
+               method="knn",
+               metric="ROC",
+               tuneLength=10,
+               preProc=c("center","scale"),
+               trControl = mycontrol) 
+
+prediction_pknn<- predict(fit.knn, testData, type = "prob")
+colAUC(prediction_pknn,testData$diagnosis, plotROC = TRUE) 
+
+## another method  to evaluate using confusion matrix
+prediction_pknn<- predict(fit.knn, testData)
+confusionMatrix(prediction_pknn, factor(testData$diagnosis))
+
+
+```
+the r console is the AUC value. 
+
+
+## 2. random forest 
+```{r}
+
+set.seed(12L)
+fit.randomforest<-train(diagnosis~.,
+                        data=trainingData,method = "ranger", 
+                        metric="ROC", 
+                        tuneLength=10,
+                        tuneGrid = expand.grid(
+                        mtry = c(3,4,5,6),
+                        splitrule = c("gini", "extratrees"),
+                        min.node.size = 1),
+                        trControl = mycontrol) 
+
+
+prediction_prf<- predict(fit.randomforest, testData, type = "prob")
+colAUC(prediction_prf, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_prf<- predict(fit.randomforest, testData)
+confusionMatrix(prediction_prf, factor(testData$diagnosis))
+
+```
+
+
+## 3.Naives Bayes  
 
 
 ```{r}
 
-## What is the minimum number of principal components required to explain 80% of the variance of the data?
-## 5
+set.seed(12L)
+fit.nb<- train(diagnosis~.,
+               data=trainingData,
+               method="naive_bayes",
+               metric="ROC",
+               tuneLength=10,
+               trControl=mycontrol)
 
-wisc.pr$rotation[1:10,1:2]
-data.scaled <- scale(wisc.data) 
+prediction_pnb<- predict(fit.nb, testData, type = "prob")
+colAUC(prediction_pnb, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_pnb<- predict(fit.nb, testData)
+confusionMatrix(prediction_pnb, factor(testData$diagnosis))
+
+
+```
+
+
+## 4. svm 
+
+```{r}
+
+
+
+set.seed(12L)
+fit.svm<-train(diagnosis~.,
+               data=trainingData,
+               method="svmRadial",
+               metric="ROC", 
+               tuneLength=10, 
+               trControl=mycontrol)
+
+
+prediction_psvm<- predict(fit.svm, testData, type = "prob")
+colAUC(prediction_psvm, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_psvm<- predict(fit.svm, testData)
+confusionMatrix(prediction_psvm, factor(testData$diagnosis))
+
+
+```
+
+```{r}
+
+
+model_list <- list( 
+                   knn = fit.knn,
+                   rf = fit.randomforest,
+                   nb = fit.nb,
+                   svm= fit.svm
+                   )
+
+resamp <- resamples(model_list)
+
+summary(resamp)
+lattice::bwplot(resamp, metric = "ROC")
+
+```
+Result: ROC SVM is best model for this data set. which is quite different from the kaggle notebook lol 
+
+
+```{r}
+
+#############Preparation of the data for clustering 
+set.seed(12L)
+cancer.pca$rotation[1:10,1:2]
+#Since the value of each varaible far apart, need to be scaled 
+cancerfactor.scaled <- scale(cancerfactor) 
 
 
 # Calculate the (Euclidean) distances: data.dist
-data.dist <- dist(data.scaled)
+cancerfactor.dist <- dist(cancerfactor.scaled)
+```
+
+
+
+
+### Additional modelling : clustering
+unsupervised algorithm 
+```{r}
+
+set.seed(50)
 # Create a hierarchical clustering model: wisc.hclust
-wisc.hclust <- hclust(data.dist, method = "complete")
+cancerfactor.hclust <- hclust(cancerfactor.dist, method = "complete")
+
+
 # Results of hierarchical clustering
 # cutting the height at 20 will give 4 clusters
-plot(wisc.hclust)
+plot(cancerfactor.hclust)
 
 ## Selecting number of clusters
 # Cut tree so that it has 4 clusters: wisc.hclust.clusters
-wisc.hclust.clusters <- cutree(wisc.hclust, k = 4)
+cancerfactor.hclust.clusters <- cutree(cancerfactor.hclust, k = 4)
 
+cancerfactor.hclust.clusters
 # Compare cluster membership to actual diagnoses
-table(wisc.hclust.clusters, diagnosis)
+table(cancerfactor.hclust.clusters, diagnosis)
 
 # count out of place observations based on cluster 
 # basically just summing the row mins here
-sum(apply(table(wisc.hclust.clusters, diagnosis), 1, min))
+sum(apply(table(cancerfactor.hclust.clusters, diagnosis), 1, min))  
+## the minority of the each clusters added 
 
-wisc.pr.hclust <- hclust(dist(wisc.pr$x[, 1:7]), method = "complete")
+
+###############################################
+
+
+cancerfactor.pr.hclust <- hclust(dist(cancer.pca$x[, 1:2]), method = "complete")
 
 # Cut model into 4 clusters: wisc.pr.hclust.clusters
-wisc.pr.hclust.clusters <- cutree(wisc.pr.hclust, k = 4)
+cancerfactor.pr.hclust.clusters <- cutree(cancerfactor.pr.hclust, k = 4)
 
-wisc.km <- kmeans(scale(wisc.data), centers = 2, nstart = 20)
+
+###
+clusplot(scale(cancerfactor), cancerfactor.pr.hclust.clusters, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,plotchar=TRUE,
+         labels=1, lines=2) 
+### not appropriate becuz 4 clusters. If you want to directly compare can use k =2 and run this code 
+
+dev.off
+
+###########################################################
+
+
+##kmeans of clustering 
+cancerfactor.km <- kmeans(scale(cancerfactor), centers = 2, nstart = 20)
+
+
+clusplot(scale(cancerfactor), cancerfactor.km$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,plotchar=TRUE,
+         labels=1, lines=2)
+dev.off
+##idk how to change the color of the points under different shades 
+
 
 # Compare to actual diagnoses
-t <- table(wisc.pr.hclust.clusters, diagnosis)
+t <- table(cancerfactor.pr.hclust.clusters, diagnosis)
 t
  
 sum(apply(t, 1, min))
-t <- table(wisc.km$cluster, diagnosis)
+t <- table(cancerfactor.km$cluster, diagnosis)
 t
 
 sum(apply(t, 1, min))
+
+
+############ 
+
+#other method to evaluate : dunns 
+
+dunn_km<-dunn(clusters=cancerfactor.km$cluster,Data=cancerfactor)
+
+dunn_km
+
+dunn_hclust<-dunn(clusters=cancerfactor.hclust.clusters,Data=cancerfactor)
+
+dunn_hclust
+
+dunn_prhclust<-dunn(clusters=cancerfactor.pr.hclust.clusters,Data=cancerfactor)
+
+dunn_prhclust
+
 ```
+
+can get the dunn index to compare among the clustering 
+
+The table is the confusion matrix for clustering. Since clustering's accuracy cannot be obtained through ROC, can use confusion matrix to compare with other models 
+
+
+
+
+
+
 
 
 
