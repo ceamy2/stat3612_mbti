@@ -87,41 +87,51 @@ heatmap(x = res, col = col, symm = TRUE)
 
 #Create the correlation heatmap with ggplot2
 #install.packages("reshape2")
-
 melted_res<-melt(res)
 head(melted_res)
 ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
-get_upper_tri <- function(res){
+uppertriangle <- function(res){
   res[lower.tri(res)]<- NA
   return(res)}
-upper_tri <- get_upper_tri(res)
+
+uptri <- uppertriangle(res)
+uptri
+library(reshape2)
+melted_res <- melt(uptri, na.rm = TRUE)
+# Heatmap
+library(ggplot2)
+heatmap1<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
+  upper_tri <- uppertriangle(res)
 upper_tri
 melted_res <- melt(upper_tri, na.rm = TRUE)
 # Heatmap
 ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
   geom_tile(color = "white")+
-  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+  scale_fill_gradient2(low = "navy", high = "indianred", mid = "white", 
                        midpoint = 0, limit = c(-1,1), space = "Lab", 
                        name="Pearson\nCorrelation") +
   theme_minimal()+ 
   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                   size = 12, hjust = 1))+
+                                   size = 11, hjust = 1))+
   coord_fixed()
 
-melted_res + 
-  geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
-  theme(
-    axis.title.x = element_blank(),
-    axis.title.y = element_blank(),
-    panel.grid.major = element_blank(),
-    panel.border = element_blank(),
-    panel.background = element_blank(),
-    axis.ticks = element_blank(),
-    legend.justification = c(1, 0),
-    legend.position = c(0.6, 0.7),
-    legend.direction = "horizontal")+
+# install.packages("ggmap")
+library(ggmap)
+# melted_res <- ggmap(melted_res)
+heatmap1 + 
+geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "black", size = 2) +
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
-  title.position = "top", title.hjust = 0.5))
+                title.position = "top", title.hjust = 0.5))
 
 
 #scatter plots
@@ -267,7 +277,7 @@ testData<-cancer.org.mod[-trainingIndex,]
 
 ```{r}
 
-cancer.data
+#cancer.data
 cancerfactor
 lda_df <- lda(diagnosis ~., data = trainingData, scale = TRUE)
 
@@ -399,13 +409,7 @@ fit.knn<-train(diagnosis~.,
                trControl = mycontrol) 
 
 prediction_pknn<- predict(fit.knn, testData, type = "prob")
-prediction_pknn<- predict(fit.knn, testData)
-colAUC(prediction_pknn,testData$diagnosis, plotROC = TRUE)
-#give the plot and the AUC value in R console 
-prediction_pknn
-knn.roc=performance(prediction_pknn,"tpr","fpr")
-knn.auc=performance(prediction_pknn,"auc")
-
+colAUC(prediction_pknn,testData$diagnosis, plotROC = TRUE) 
 
 ## another method  to evaluate using confusion matrix
 prediction_pknn<- predict(fit.knn, testData)
