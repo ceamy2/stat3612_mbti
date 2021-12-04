@@ -22,7 +22,7 @@ install.packages("factoextra")
 install.packages("clValid")
 install.packages("ROCR")
 install.packages("pROC")
-
+install.packages("caTools")
 ```
 
 ```{r}
@@ -44,7 +44,7 @@ library(factoextra)
 library(caret)
 library(ROCR)
 library(pROC) 
-
+library(caTools)
 library(cluster)
 ```
 
@@ -128,7 +128,9 @@ theme(
                 title.position = "top", title.hjust = 0.5))
 
 
+```
 
+#Reformatting Data
 ```{r}
 
 mydata<-cancer[, 3:12]
