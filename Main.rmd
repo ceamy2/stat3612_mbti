@@ -193,7 +193,7 @@ cancer.pca <- prcomp(cancerfactor, scale = T, center=TRUE)
 ```{r}
 # this needs cancer$diagnosis :M/B
 # this one shows the separation of the data
-fviz_pca_ind(cancer.pca, geom.ind = "point", pointshape=21, pointsize=2, fill.ind=cancer$diagnosis, addEllipses = TRUE, label= "var", col.ind = "black", col.var="black", paleete="jco", legend.title ="Diagnosis" ) + ggtitle("two dimensional PCA plot based on 30 features")+ theme(plot.title = element_text(hjust=0.5))
+fviz_pca_ind(cancer.pca, geom.ind = "point", pointshape=21, pointsize=2, fill.ind=cancer.org$diagnosis, addEllipses = TRUE, label= "var", col.ind = "black", col.var="black", paleete="jco", legend.title ="Diagnosis" ) + ggtitle("two dimensional PCA plot based on 30 features")+ theme(plot.title = element_text(hjust=0.5))
 
 
 #this one shows the vector 
@@ -271,19 +271,14 @@ cancer.data
 cancerfactor
 lda_df <- lda(diagnosis ~., data = trainingData, scale = TRUE)
 
-cancer.pcst<-cancer.pca$x[1:6]
 
-smp_size<-floor(0.75*nrow(cancer.pcst))
-
-
-pca_ldf<- lda(diagnosis~ cancer.pcst[1]+ cancer.pcst[2],data=trainingData)
+pca_ldf<- lda(diagnosis~.,data=trainingData)
 
 
 prop.lda<-lda_df$sdev^2/sum(lda_df$svd^2)
 
 library(scales)
 plda<-predict(lda_df,newdata=testData)
-
 
 
 ## evaluation 
@@ -296,52 +291,36 @@ roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
 
 auc.train<-performance(pred,measure="auc") 
 auc.train<-auc.train@y.values
-auc.train
 
 
+### area under roc curve
 plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
 print(auc.train[[1]],3)
-
-dataset=data.frame(species= cancer[,"diagnosis"],pca=cancer.pca$x,lda=plda$x)
-
-lda_df
-p1 <- ggplot(dataset) + geom_point(aes(lda_df.LD1, lda_df.LD2, colour = species, shape = species), size = 2.5) + 
-  labs(x = paste("LD1 (", percent(prop.lda[1]), ")", sep=""),
-       y = paste("LD2 (", percent(prop.lda[2]), ")", sep=""))
-
-p1
-
-topterm<-preproc_lda_df %>%
-        group_by(cancerfactor)%>%
-        top_n(15,beta) %>%
-        ungroup() %>%
-        arrange(cancerfactor,-beta)
 
 
 ```
 
 #LDA analysis using PCA 
 ```{r}
-
+#### data preparation 
 cancer.pcst<-cancer.pca$x[,1:6]
 cancer.pcst<- cbind(cancer.pcst,cancer$diagnosis)
 colnames(cancer.pcst)[7]<-"diagnosis"
-cancer.pcst[7]
-cancer.pcst
-diagnosis
 
+
+##spliting data
 set.seed(12L)
 trainingIndex <-createDataPartition(diagnosis, p= 0.75, list=FALSE)
 trainingDatalda<-cancer.pcst[trainingIndex,]
 testDatalda<-cancer.pcst[-trainingIndex,]
 trainingDatalda<-as.data.frame(trainingDatalda)
 testDatalda<-as.data.frame(testDatalda)
-testDatalda
+
 
 cancer.lda <- lda(diagnosis~.,data=trainingDatalda)
 cancer.lda.predict<-predict(cancer.lda,newdata=testDatalda) 
 
-
+############ evaulation
 cancer.predict.post<-as.data.frame(cancer.lda.predict$posterior)
 
 pred<-prediction(cancer.predict.post[,2],testDatalda$diagnosis)
@@ -350,13 +329,11 @@ roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
 
 auc.train<-performance(pred,measure="auc") 
 auc.train<-auc.train@y.values
-auc.train
 
 
+##ROC curve 
 plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
-print(auc.train[[1]],3) 
-
-
+ 
 ```
 reference : 
 https://towardsdatascience.com/linear-discriminant-analysis-lda-101-using-r-6a97217a55a6 
