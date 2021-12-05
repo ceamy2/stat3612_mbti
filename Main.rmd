@@ -499,6 +499,8 @@ resamp <- resamples(model_list)
 
 summary(resamp)
 lattice::bwplot(resamp, metric = "ROC")
+lattice::bwplot(resamp, metric = "Sens")
+lattice::bwplot(resamp, metric = "Spec")
 
 ```
 Result: ROC SVM is best model for this data set. which is quite different from the kaggle notebook lol 
