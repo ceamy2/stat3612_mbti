@@ -1,0 +1,587 @@
+---
+title: "Stat3616 FP"
+author: "Eun Chong Chu"
+date: "12/11/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r, echo=FALSE}
+#install packages 
+#install.packages("ggplot2")
+#install.packages("reshap2")
+#install.packages("PerformanceAnalytics")
+#install.packages("remotes")
+#install_github("vqv/ggbiplot")
+#install.packages("stringr")
+#install.packages("factoextra")
+#install.packages("clValid")
+#install.packages("ROCR")
+#install.packages("pROC")
+#install.packages("caTools")
+#install.packages("ggmap") 
+#install.packages("magrittr") 
+#install.packages("car")
+
+```
+
+```{r, echo=FALSE}
+#library 
+library(ggplot2)
+library(reshape2)
+library(ggmap)
+library(magrittr) 
+library("PerformanceAnalytics") 
+library("remotes")
+library("ggbiplot") 
+library(stringr) 
+library(ranger)
+library(naivebayes)
+library(kernlab)
+library(rpart)
+library(factoextra)
+library(clValid)
+library(MASS)
+library(factoextra)
+library(caret)
+library(ROCR)
+library(pROC) 
+library(caTools)
+library(cluster)
+library(car)
+library(scales)
+```
+
+## Exploring Cancer Dataset ##
+
+```{r}
+#Reading cancer.csv
+
+cancer <- read.csv("cancer_data_original.csv", header = TRUE)
+attach(cancer)
+
+
+
+cancer.org<-cancer
+
+
+cancer$diagnosis=as.numeric(cancer$diagnosis=="M")
+cancer<-as.data.frame(cancer)
+cancerfactor<-cancer[,3:32]
+
+#cancer.org cancer data with diagnosis M/B 
+#cancer data with diagnosis 1/0 
+#cancerfactor excluding the data
+```
+
+
+## count plot and box plots ## 
+```{r}
+
+# count plot about the diagnosis
+ggplot(as.data.frame(cancer),aes(factor(diagnosis))) + geom_bar()
+
+# radius_mean box plot 
+radius_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=radius_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+plot(radius_mean)
+
+fit_radius <- lm(cancer$id + cancer$diagnosis ~ cancer$radius_mean)
+summary(fit_radius)
+
+# texture_mean box plot 
+texture_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=texture_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+fit_texture <- lm(cancer$id ~ cancer$diagnosis + cancer$texture_mean)
+summary(fit_texture)
+
+#area mean box plot
+area_mean <- ggplot(as.data.frame(cancer),aes(x=factor(diagnosis),y=area_mean)) + geom_boxplot() + geom_smooth(method="lm",se=TRUE, fullrange=FALSE, level=0.95)
+fit_area <- lm(cancer$id ~ cancer$diagnosis + cancer$area_mean)
+summary(fit_area)
+
+#other boxplots were created but only select few data plot to show the box plots
+
+```
+
+
+## Heatmap ##
+
+```{r}
+
+mydata<-cancer[, c(3,4,5,6,7,8,9,10,11,12)]
+head(mydata)
+res<-cor(mydata)
+round(res,2)
+
+#heatmap 
+col<- colorRampPalette(c("navy", "white", "indianred"))(20)
+heatmap(x = res, col = col, symm = TRUE)
+
+#Create the correlation heatmap with ggplot2
+#install.packages("reshape2")
+melted_res<-melt(res)
+head(melted_res)
+ggplot(data = melted_res, aes(x=Var1, y=Var2, fill=value)) + geom_tile()
+uppertriangle <- function(res){
+  res[lower.tri(res)]<- NA
+  return(res)}
+
+uptri <- uppertriangle(res)
+uptri
+
+melted_res <- melt(uptri, na.rm = TRUE)
+
+
+# Heatmap
+heatmap<-ggplot(data = melted_res, aes(Var2, Var1, fill = value))+ 
+  geom_tile(color = "white")+
+  scale_fill_gradient2(low = "navy", high = "indianred", mid = "white", 
+                       midpoint = 0, limit = c(-1,1), space = "Lab", 
+                       name="Pearson\nCorrelation") +
+  theme_minimal()+ 
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                   size = 11, hjust = 1))+
+  coord_fixed()
+
+heatmap + 
+geom_text(aes(Var2, Var1, label = round(value,digits=2)), color = "black", size = 2) +
+theme(
+  axis.title.x = element_blank(),
+  axis.title.y = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.border = element_blank(),
+  panel.background = element_blank(),
+  axis.ticks = element_blank(),
+  legend.justification = c(1, 0),
+  legend.position = c(0.6, 0.7),
+  legend.direction = "horizontal")+
+  guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                title.position = "top", title.hjust = 0.5))
+
+
+```
+
+## Reformatting Data finding correlation ##
+```{r}
+
+mydata<-cancer[, 3:12]
+head(mydata)
+res<-cor(mydata)
+round(res,2)
+```
+
+## VIF ## 
+```{r}
+
+# Split the data into training and test set
+cancerVIF<-cancer[,2:13]
+set.seed(123)
+training.samples <- createDataPartition(y=cancerVIF$diagnosis,p=0.8,list = FALSE)
+train.data  <- cancerVIF[training.samples, ]
+test.data <- cancerVIF[-training.samples, ]
+
+# Build the model
+model1 <- lm(diagnosis ~., data = train.data)
+# Make predictions
+predictions <- model1 %>% predict(test.data)
+# Model performance
+data.frame(
+  RMSE = RMSE(predictions, test.data$diagnosis),
+  R2 = R2(predictions, test.data$diagnosis)
+)
+car::vif(model1)
+```
+
+
+
+
+
+## peformming PCA ##
+
+```{r}
+
+#use entire variables 
+cancerfactor<-cancer[,3:32]
+
+
+#calculating mean and variance of possible cancer factors 
+round(colMeans(cancerfactor),4)
+round(apply(cancerfactor,2,sd),4) 
+#By this we recognize the necessity of scaling the data when working on pca 
+
+#creating pca 
+cancer.pca <- prcomp(cancerfactor, scale = T, center=TRUE)
+
+```
+
+
+## plotting pca plot ##
+```{r}
+#data sepearation with 2d pca plot
+fviz_pca_ind(cancer.pca, geom.ind = "point", pointshape=21, pointsize=2, fill.ind=cancer.org$diagnosis, addEllipses = TRUE, label= "var", col.ind = "black", col.var="black", paleete="jco", legend.title ="Diagnosis" ) + ggtitle("two dimensional PCA plot based on 30 features")+ theme(plot.title = element_text(hjust=0.5))
+
+
+#pca vector plot 
+ggbiplot(cancer.pca)
+summary(cancer.pca) 
+
+```
+
+
+## identify variance are explained(%) through pca components ##
+
+```{r}
+
+# Calculate variability of each component
+
+cancerfactor.var<-cancer.pca$sdev^2 
+cancer.pve <- cancerfactor.var / sum(cancerfactor.var)
+
+# Plot variance explained for each principal component
+#1
+plot(cancer.pve, xlab = "Principal Component", 
+     ylab = "Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+
+#2 eigen value of each pca another way to explain #1
+fviz_eig(cancer.pca)
+
+
+# Plot cumulative proportion of variance explained
+plot(cumsum(cancer.pve), xlab = "Principal Component", 
+     ylab = "Cumulative Proportion of Variance Explained", 
+     ylim = c(0, 1), type = "b")
+
+
+
+```
+
+
+
+## Supervised machine learning technique ##
+
+## splitting data ##
+
+```{r}
+
+set.seed(12L)
+
+cancer.org.mod=cancer.org[,2:32]
+trainingIndex <-createDataPartition(cancer.org$diagnosis, p= 0.75, list=FALSE)
+trainingData<-cancer.org.mod[trainingIndex,]
+testData<-cancer.org.mod[-trainingIndex,]
+
+
+```
+
+
+## LDA Analysis ##
+
+```{r}
+
+#LDA analysis
+
+lda_df <- lda(diagnosis ~., data = trainingData, scale = TRUE)
+pca_ldf<- lda(diagnosis~.,data=trainingData)
+
+prop.lda<-lda_df$sdev^2/sum(lda_df$svd^2)
+plda<-predict(lda_df,newdata=testData)
+
+
+# evaluation 
+
+cancer.predict.post<-as.data.frame(plda$posterior)
+
+pred<-prediction(cancer.predict.post[,2],testData$diagnosis)
+
+roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
+
+auc.train<-performance(pred,measure="auc") 
+auc.train<-auc.train@y.values
+
+
+# ROC curve
+plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
+print(auc.train[[1]],3)
+
+
+```
+
+## LDA analysis using PCA ##
+```{r}
+# data preparation based on PCA
+cancer.pcst<-cancer.pca$x[,1:6]
+cancer.pcst<- cbind(cancer.pcst,cancer$diagnosis)
+colnames(cancer.pcst)[7]<-"diagnosis"
+
+set.seed(12L)
+trainingIndex <-createDataPartition(diagnosis, p= 0.75, list=FALSE)
+trainingDatalda<-cancer.pcst[trainingIndex,]
+testDatalda<-cancer.pcst[-trainingIndex,]
+trainingDatalda<-as.data.frame(trainingDatalda)
+testDatalda<-as.data.frame(testDatalda)
+
+#LDA analysis
+cancer.lda <- lda(diagnosis~.,data=trainingDatalda)
+cancer.lda.predict<-predict(cancer.lda,newdata=testDatalda) 
+
+#evaulation
+cancer.predict.post<-as.data.frame(cancer.lda.predict$posterior)
+
+pred<-prediction(cancer.predict.post[,2],testDatalda$diagnosis)
+
+roc.perf = performance(pred,measure ="tpr",x.measure = "fpr")
+
+auc.train<-performance(pred,measure="auc") 
+auc.train<-auc.train@y.values
+
+
+#ROC curve 
+plot(roc.perf)+abline(a=0,b=1)+text(x=0.25,y=0.65, paste("AUC=",round(auc.train[[1]],3)),sep="")
+ 
+```
+
+
+## splitting data for machine learning models ##
+
+```{r}
+
+set.seed(12L)
+
+
+cancer.org.mod=cancer.org[,2:32]
+trainingIndex <-createDataPartition(cancer.org$diagnosis, p= 0.75, list=FALSE)
+trainingData<-cancer.org.mod[trainingIndex,]
+testData<-cancer.org.mod[-trainingIndex,]
+
+
+```
+
+
+## 0. setting the tuning parameter ##
+
+```{r}
+
+
+set.seed(12L)
+
+myFolds <- createFolds(trainingData$diagnosis, k = 5)
+str(myFolds)
+
+mycontrol<-trainControl(
+                        method="cv", 
+                        number = 10,
+                        classProbs=TRUE, 
+                        savePredictions = TRUE,                           summaryFunction=twoClassSummary, 
+                        index=myFolds,
+                        verboseIter = FALSE)
+
+```
+
+## 1 knn method ## 
+```{r}
+
+
+set.seed(12L)
+fit.knn<-train(diagnosis~.,
+               data=trainingData,
+               method="knn",
+               metric="ROC",
+               tuneLength=10,
+               preProc=c("center","scale"),
+               trControl = mycontrol) 
+
+prediction_pknn<- predict(fit.knn, testData, type = "prob")
+colAUC(prediction_pknn,testData$diagnosis, plotROC = TRUE) 
+
+## another method  to evaluate using confusion matrix
+prediction_pknn<- predict(fit.knn, testData)
+confusionMatrix(prediction_pknn, factor(testData$diagnosis))
+
+
+```
+the r console is the AUC value. 
+
+
+## 2. random forest ##
+```{r}
+
+set.seed(12L)
+fit.randomforest<-train(diagnosis~.,
+                        data=trainingData,method = "ranger", 
+                        metric="ROC", 
+                        tuneLength=10,
+                        tuneGrid = expand.grid(
+                        mtry = c(3,4,5,6),
+                        splitrule = c("gini", "extratrees"),
+                        min.node.size = 1),
+                        trControl = mycontrol) 
+
+
+prediction_prf<- predict(fit.randomforest, testData, type = "prob")
+colAUC(prediction_prf, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_prf<- predict(fit.randomforest, testData)
+confusionMatrix(prediction_prf, factor(testData$diagnosis))
+
+```
+
+
+## 3.Naives Bayes ##  
+
+
+```{r}
+
+set.seed(12L)
+fit.nb<- train(diagnosis~.,
+               data=trainingData,
+               method="naive_bayes",
+               metric="ROC",
+               tuneLength=10,
+               trControl=mycontrol)
+
+prediction_pnb<- predict(fit.nb, testData, type = "prob")
+colAUC(prediction_pnb, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_pnb<- predict(fit.nb, testData)
+confusionMatrix(prediction_pnb, factor(testData$diagnosis))
+
+
+```
+
+
+## 4. svm ##
+
+```{r}
+
+
+
+set.seed(12L)
+fit.svm<-train(diagnosis~.,
+               data=trainingData,
+               method="svmRadial",
+               metric="ROC", 
+               tuneLength=10, 
+               trControl=mycontrol)
+
+
+prediction_psvm<- predict(fit.svm, testData, type = "prob")
+colAUC(prediction_psvm, testData$diagnosis, plotROC = TRUE)
+
+## another method  to evaluate using confusion matrix
+prediction_psvm<- predict(fit.svm, testData)
+confusionMatrix(prediction_psvm, factor(testData$diagnosis))
+
+
+```
+
+## comparing the models using bwplot ##
+```{r}
+
+
+model_list <- list( 
+                   knn = fit.knn,
+                   rf = fit.randomforest,
+                   nb = fit.nb,
+                   svm= fit.svm
+                   )
+
+resamp <- resamples(model_list)
+
+summary(resamp)
+lattice::bwplot(resamp, metric = "ROC")
+lattice::bwplot(resamp, metric = "Sens")
+lattice::bwplot(resamp, metric = "Spec")
+
+```
+
+
+## Unsupervised algorith: Clustering ##
+```{r}
+
+# Preparation of the data for clustering 
+set.seed(12L)
+cancer.pca$rotation[1:10,1:2]
+
+#Since the value of each varaible far apart, need to be scaled 
+cancerfactor.scaled <- scale(cancerfactor) 
+
+
+# Calculate the (Euclidean) distances: data.dist
+cancerfactor.dist <- dist(cancerfactor.scaled)
+```
+
+
+
+
+## modelling ## 
+
+```{r}
+
+set.seed(50)
+
+#hierarchical clustering
+cancerfactor.hclust <- hclust(cancerfactor.dist, method = "complete")
+plot(cancerfactor.hclust)
+
+# Cut tree to 4 clusters
+cancerfactor.hclust.clusters <- cutree(cancerfactor.hclust, k = 4)
+cancerfactor.hclust.clusters
+
+# Comparison of cluster to actual diagnoses
+table(cancerfactor.hclust.clusters, diagnosis)
+
+# count out of place observations based on cluster 
+
+sum(apply(table(cancerfactor.hclust.clusters, diagnosis), 1, min))  
+#the minor of the each clusters added up
+
+# hierarchical clustering using pca
+# Cut model into 4 clusters
+cancerfactor.pr.hclust <- hclust(dist(cancer.pca$x[, 1:2]), method = "complete")
+cancerfactor.pr.hclust.clusters <- cutree(cancerfactor.pr.hclust, k = 4)
+
+#kmeans of clustering 
+cancerfactor.km <- kmeans(scale(cancerfactor), centers = 2, nstart = 20)
+
+# clustering plot for k means of clustering k =2 
+clusplot(scale(cancerfactor), cancerfactor.km$cluster, main='2D representation of the Cluster solution',
+         color=TRUE, shade=TRUE,plotchar=TRUE,
+         labels=1, lines=2)
+dev.off
+
+# Compare to actual diagnosis
+t <- table(cancerfactor.pr.hclust.clusters, diagnosis)
+t
+
+# compare to actual diagnosis
+sum(apply(t, 1, min))
+t <- table(cancerfactor.km$cluster, diagnosis)
+t
+
+
+#other method to evaluate : dunn index
+dunn_km<-dunn(clusters=cancerfactor.km$cluster,Data=cancerfactor)
+dunn_hclust<-dunn(clusters=cancerfactor.hclust.clusters,Data=cancerfactor)
+dunn_prhclust<-dunn(clusters=cancerfactor.pr.hclust.clusters,Data=cancerfactor)
+
+dunn_km
+dunn_hclust
+dunn_prhclust
+
+```
+
+
+
+
+
+
+
+
